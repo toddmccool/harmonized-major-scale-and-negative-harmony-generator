@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Negative Harmony Chord Generator</title>
+    <style>
+      button,
+      select {
+        margin: 5px;
+        padding: 5px;
+      }
+      .section {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Negative Harmony Generator</h1>
+    <div>
+      Select Key:
+      <select id="keySelection">
+        <!-- Keys will be dynamically populated -->
+      </select>
+    </div>
+    <div id="chordSelection" class="section"></div>
+    <div id="conversionResults" class="section"></div>
+
+    <script>
+      const keys = [
+        "C",
+        "Db",
+        "D",
+        "Eb",
+        "E",
+        "F",
+        "Gb",
+        "G",
+        "Ab",
+        "A",
+        "Bb",
+        "B",
+      ];
+      const intervals = [0, 2, 4, 5, 7, 9, 11]; // Intervals from the root for diatonic chords
+      const chordQualities = [
+        "Maj",
+        "mi6/mi9",
+        "mi7",
+        "Maj7#11",
+        "7",
+        "mi9",
+        "dim or mi7b5",
+      ];
+
+      function populateKeySelection() {
+        const select = document.getElementById("keySelection");
+        keys.forEach((key) => {
+          const option = document.createElement("option");
+          option.value = key;
+          option.textContent = key + " Major";
+          select.appendChild(option);
+        });
+      }
+
+      function isSharpKey(key) {
+        const sharpKeys = ["C", "G", "D", "A", "E", "B"];
+        return sharpKeys.includes(key);
+      }
+
+      function getNoteIndex(note) {
+        return keys.findIndex((k) => k === note);
+      }
+
+      function getNoteByInterval(rootIndex, interval, useSharps = true) {
+        let note = keys[(rootIndex + interval) % 12];
+        if (!useSharps) {
+          const sharpToFlat = {
+            "C#": "Db",
+            "D#": "Eb",
+            "F#": "Gb",
+            "G#": "Ab",
+            "A#": "Bb",
+          };
+          note = sharpToFlat[note] || note;
+        }
+        return note;
+      }
+
+      function findNewKey(originalKey) {
+        const originalKeyIndex = keys.indexOf(originalKey);
+        const newKeyIndex = (originalKeyIndex + 3) % 12;
+        return keys[newKeyIndex];
+      }
+
+      function generateHarmonizedScale(key) {
+        const scale = [];
+        const rootIndex = getNoteIndex(key);
+        intervals.forEach((interval, index) => {
+          const noteIndex = (rootIndex + interval) % 12;
+          const chord = keys[noteIndex] + chordQualities[index];
+          scale.push(chord);
+        });
+        return scale;
+      }
+
+      function displayChordsForSelectedKey(key) {
+        const container = document.getElementById("chordSelection");
+        container.innerHTML = ""; // Clear previous chords
+        const rootIndex = getNoteIndex(key);
+        const useSharps = isSharpKey(key); // Determine if we should use sharps
+
+        const harmonizedScale = generateHarmonizedScale(key);
+        harmonizedScale.forEach((chord) => {
+          const button = document.createElement("button");
+          button.textContent = chord;
+          button.addEventListener("click", () => convertChord(chord, key));
+          container.appendChild(button);
+        });
+      }
+
+      function convertChord(chord, key) {
+        const resultsContainer = document.getElementById("conversionResults");
+        const originalScale = generateHarmonizedScale(key);
+        const newKey = findNewKey(key);
+        const newKeyScale = generateHarmonizedScale(newKey);
+
+        let chordIndex = originalScale.findIndex(
+          (scaleChord) => scaleChord.split(" ")[0] === chord.split(" ")[0]
+        );
+
+        let negativeHarmonyIndex = newKeyScale.length - 2 - chordIndex;
+
+        if (negativeHarmonyIndex < 0)
+          negativeHarmonyIndex += newKeyScale.length;
+
+        const negativeHarmonyChord = newKeyScale[negativeHarmonyIndex];
+
+        resultsContainer.innerHTML = `Original: ${chord} <br> Converted to Negative Harmony: ${negativeHarmonyChord}`;
+      }
+
+      document
+        .getElementById("keySelection")
+        .addEventListener("change", function () {
+          const selectedKey = this.value;
+          displayChordsForSelectedKey(selectedKey);
+        });
+
+      populateKeySelection(); // Initialize key selection options
+    </script>
+  </body>
+</html>
